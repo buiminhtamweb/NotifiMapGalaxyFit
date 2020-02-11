@@ -2,6 +2,7 @@ package com.example.notifimapgalaxyfit;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -12,6 +13,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.view.View;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
@@ -22,6 +24,9 @@ public class MainActivity extends AppCompatActivity {
     private ImageChangeBroadcastReceiver imageChangeBroadcastReceiver;
     private AlertDialog enableNotificationListenerAlertDialog;
     private TextView textView;
+    private View btnStartService;
+    private View btnStopService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +44,21 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("com.github.chagall.notificationlistenerexample");
         registerReceiver(imageChangeBroadcastReceiver,intentFilter);
+
+        btnStartService = findViewById(R.id.buttonStartService);
+        btnStopService = findViewById(R.id.buttonStopService);
+        btnStartService.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startService();
+            }
+        });
+        btnStopService.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stopService();
+            }
+        });
     }
 
     @Override
@@ -48,14 +68,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Change Intercepted Notification Image
+     * Change Intercepted NotificationUtil Image
      * Changes the MainActivity image based on which notification was intercepted
      * @param notificationCode The intercepted notification code
      */
 
 
     /**
-     * Is Notification Service Enabled.
+     * Is NotificationUtil Service Enabled.
      * Verifies if the notification listener service is enabled.
      * Got it from: https://github.com/kpbird/NotificationListenerService-Example/blob/master/NLSExample/src/main/java/com/kpbird/nlsexample/NLService.java
      * @return True if enabled, false otherwise.
@@ -87,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
     public class ImageChangeBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            int receivedNotificationCode = intent.getIntExtra("Notification Code",-1);
+            int receivedNotificationCode = intent.getIntExtra("NotificationUtil Code",-1);
 
             textView.setText(receivedNotificationCode+"+++");
         }
@@ -95,9 +115,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * Build Notification Listener Alert Dialog.
+     * Build NotificationUtil Listener Alert Dialog.
      * Builds the alert dialog that pops up if the user has not turned
-     * the Notification Listener Service on yet.
+     * the NotificationUtil Listener Service on yet.
      * @return An alert dialog which leads to the notification enabling screen
      */
     private AlertDialog buildNotificationServiceAlertDialog(){
@@ -119,4 +139,27 @@ public class MainActivity extends AppCompatActivity {
                 });
         return(alertDialogBuilder.create());
     }
+
+
+
+    public void startService() {
+        Intent serviceIntent = new Intent(this, ServiceNotifi.class);
+        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+        ContextCompat.startForegroundService(this, serviceIntent);
+
+//        Intent serviceIntent2 = new Intent(this, ForegroundService.class);
+//        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+//        ContextCompat.startForegroundService(this, serviceIntent2);
+    }
+    public void stopService() {
+        Intent serviceIntent = new Intent(this, ServiceNotifi.class);
+        stopService(serviceIntent);
+
+        Intent serviceIntent3 = new Intent(this, NotificationListener.class);
+        stopService(serviceIntent3);
+
+//        Intent serviceIntent2 = new Intent(this, ForegroundService.class);
+//        stopService(serviceIntent2);
+    }
+
 }

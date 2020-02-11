@@ -1,10 +1,16 @@
 package com.example.notifimapgalaxyfit;
 
+import android.app.Notification;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 public class NotificationListener extends NotificationListenerService {
 
@@ -32,6 +38,8 @@ public class NotificationListener extends NotificationListenerService {
         public static final int OTHER_NOTIFICATIONS_CODE = 4; // We ignore all notification with code == 4
     }
 
+    private String title = "";
+
     @Override
     public IBinder onBind(Intent intent) {
         return super.onBind(intent);
@@ -41,12 +49,10 @@ public class NotificationListener extends NotificationListenerService {
     public void onNotificationPosted(StatusBarNotification sbn){
         int notificationCode = matchNotificationCode(sbn);
 
-        Log. i ( TAG , "********** onNotificationPosted" ) ;
-        Log. i ( TAG , "ID :" + sbn.getId() + " \t " + sbn.getNotification(). tickerText + " \t " + sbn.getPackageName()) ;
 
         if(notificationCode != InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE){
             Intent intent = new  Intent("com.github.chagall.notificationlistenerexample");
-            intent.putExtra("Notification Code", notificationCode);
+            intent.putExtra("NotificationUtil Code", notificationCode);
             sendBroadcast(intent);
         }
     }
@@ -63,7 +69,8 @@ public class NotificationListener extends NotificationListenerService {
                 for (int i = 0; i < activeNotifications.length; i++) {
                     if (notificationCode == matchNotificationCode(activeNotifications[i])) {
                         Intent intent = new  Intent("com.github.chagall.notificationlistenerexample");
-                        intent.putExtra("Notification Code", notificationCode);
+                        intent.putExtra("NotificationUtil Code", notificationCode);
+
                         sendBroadcast(intent);
                         break;
                     }
@@ -74,14 +81,15 @@ public class NotificationListener extends NotificationListenerService {
 
     private int matchNotificationCode(StatusBarNotification sbn) {
         String packageName = sbn.getPackageName();
-        Log.e("packageName->>>>>", packageName);
+
         if(packageName.equals(ApplicationPackageNames.FACEBOOK_PACK_NAME)
                 || packageName.equals(ApplicationPackageNames.FACEBOOK_MESSENGER_PACK_NAME)){
             return(InterceptedNotificationCode.FACEBOOK_CODE);
         }
         else if(packageName.equals(ApplicationPackageNames.GMAPS)){
 
-            Log.e("GMAPS", String.valueOf(sbn.getUid()));
+            getContent(sbn);
+
             return(InterceptedNotificationCode.MAPS);
         }
 
@@ -89,4 +97,33 @@ public class NotificationListener extends NotificationListenerService {
             return(InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE);
         }
     }
+
+    private void getContent(StatusBarNotification sbn){
+
+        Log. e ( TAG , "********** onNotificationPosted" ) ;
+        Log. e ( TAG , "ID :" + sbn.getId() + " \t " + sbn.getNotification(). tickerText + " \t " + sbn.getPackageName()) ;
+
+        Bitmap bmp;
+        Bundle extras;
+        byte[] byteArrayS;
+
+        extras = sbn.getNotification().extras;
+
+        NotifiObj notifiObj =  new NotifiObj();
+        try {
+            notifiObj = notifiObj.setupDataFromBundle(extras);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if(!title.equals(notifiObj.getTitle())){
+            NotificationUtil.showNotification(this, notifiObj.getTitle(),notifiObj.getText());
+            title = notifiObj.getTitle();
+        }
+    }
+
+
+
+
+
 }
