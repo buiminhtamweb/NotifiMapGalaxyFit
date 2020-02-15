@@ -1,9 +1,5 @@
 package com.example.notifimapgalaxyfit;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -14,7 +10,14 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.Switch;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+
+import com.example.notifimapgalaxyfit.Data.SettingData;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +29,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
     private View btnStartService;
     private View btnStopService;
+    private View buttonLeft;
+    private View buttonRight;
+    private View buttonContinue;
+    private Switch swVibrate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,17 +54,31 @@ public class MainActivity extends AppCompatActivity {
 
         btnStartService = findViewById(R.id.buttonStartService);
         btnStopService = findViewById(R.id.buttonStopService);
-        btnStartService.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startService();
-            }
+        buttonLeft = findViewById(R.id.buttonLeft);
+        buttonRight = findViewById(R.id.buttonRight);
+        buttonContinue = findViewById(R.id.buttonContinue);
+        swVibrate = findViewById(R.id.sw_vibrate);
+
+        swVibrate.setChecked(SettingData.getVibrate(this));
+
+        swVibrate.setOnCheckedChangeListener((buttonView, isChecked) -> SettingData.setVibrate(MainActivity.this, isChecked));
+
+
+        btnStartService.setOnClickListener(v -> startService());
+        btnStopService.setOnClickListener(v -> stopService());
+
+        buttonLeft.setOnClickListener((v) -> {
+            NotificationUtil.showNotification(MainActivity.this, "Rẻ trái đường C", "300m");
         });
-        btnStopService.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                stopService();
-            }
+
+        buttonRight.setOnClickListener((v) -> {
+            NotificationUtil.showNotification(MainActivity.this, "Rẻ phải đường B", "300m");
+
+        });
+
+        buttonContinue.setOnClickListener((v) -> {
+            NotificationUtil.showNotification(MainActivity.this, "300m đường A", "300m");
+
         });
     }
 
@@ -143,8 +164,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void startService() {
-        Intent serviceIntent = new Intent(this, ServiceNotifi.class);
-        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+        Intent serviceIntent = new Intent(this, NotificationListener.class);
         ContextCompat.startForegroundService(this, serviceIntent);
 
 //        Intent serviceIntent2 = new Intent(this, ForegroundService.class);
@@ -152,9 +172,6 @@ public class MainActivity extends AppCompatActivity {
 //        ContextCompat.startForegroundService(this, serviceIntent2);
     }
     public void stopService() {
-        Intent serviceIntent = new Intent(this, ServiceNotifi.class);
-        stopService(serviceIntent);
-
         Intent serviceIntent3 = new Intent(this, NotificationListener.class);
         stopService(serviceIntent3);
 

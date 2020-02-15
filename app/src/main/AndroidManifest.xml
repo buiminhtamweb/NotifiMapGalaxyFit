@@ -35,11 +35,6 @@
         </service>
 
         <service
-            android:name=".ServiceNotifi"
-            android:enabled="true"
-            android:exported="true"></service>
-
-        <service
             android:name=".ForegroundService"
             android:enabled="true"
             android:exported="true"></service>

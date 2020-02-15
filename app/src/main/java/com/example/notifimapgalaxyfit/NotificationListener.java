@@ -1,16 +1,14 @@
 package com.example.notifimapgalaxyfit;
 
-import android.app.Notification;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Parcelable;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
-import android.widget.RemoteViews;
+
+import com.example.notifimapgalaxyfit.Data.SettingData;
 
 public class NotificationListener extends NotificationListenerService {
 
@@ -19,6 +17,7 @@ public class NotificationListener extends NotificationListenerService {
         listen the notifications
      */
     public static final String TAG = "NotificationListener";
+
     private static final class ApplicationPackageNames {
         public static final String FACEBOOK_PACK_NAME = "com.facebook.katana";
         public static final String FACEBOOK_MESSENGER_PACK_NAME = "com.facebook.orca";
@@ -46,29 +45,43 @@ public class NotificationListener extends NotificationListenerService {
     }
 
     @Override
-    public void onNotificationPosted(StatusBarNotification sbn){
+    public void onCreate() {
+        super.onCreate();
+        NotificationUtil.showNotificationService(this,
+                this.getApplication().getApplicationInfo().processName,
+                "Running");
+    }
+
+    @Override
+    public void onDestroy() {
+        NotificationUtil.cancelAllNotification(this);
+        super.onDestroy();
+    }
+
+    @Override
+    public void onNotificationPosted(StatusBarNotification sbn) {
         int notificationCode = matchNotificationCode(sbn);
 
 
-        if(notificationCode != InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE){
-            Intent intent = new  Intent("com.github.chagall.notificationlistenerexample");
+        if (notificationCode != InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE) {
+            Intent intent = new Intent("com.github.chagall.notificationlistenerexample");
             intent.putExtra("NotificationUtil Code", notificationCode);
             sendBroadcast(intent);
         }
     }
 
     @Override
-    public void onNotificationRemoved(StatusBarNotification sbn){
+    public void onNotificationRemoved(StatusBarNotification sbn) {
         int notificationCode = matchNotificationCode(sbn);
 
-        if(notificationCode != InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE) {
+        if (notificationCode != InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE) {
 
             StatusBarNotification[] activeNotifications = this.getActiveNotifications();
 
-            if(activeNotifications != null && activeNotifications.length > 0) {
+            if (activeNotifications != null && activeNotifications.length > 0) {
                 for (int i = 0; i < activeNotifications.length; i++) {
                     if (notificationCode == matchNotificationCode(activeNotifications[i])) {
-                        Intent intent = new  Intent("com.github.chagall.notificationlistenerexample");
+                        Intent intent = new Intent("com.github.chagall.notificationlistenerexample");
                         intent.putExtra("NotificationUtil Code", notificationCode);
 
                         sendBroadcast(intent);
@@ -82,26 +95,23 @@ public class NotificationListener extends NotificationListenerService {
     private int matchNotificationCode(StatusBarNotification sbn) {
         String packageName = sbn.getPackageName();
 
-        if(packageName.equals(ApplicationPackageNames.FACEBOOK_PACK_NAME)
-                || packageName.equals(ApplicationPackageNames.FACEBOOK_MESSENGER_PACK_NAME)){
-            return(InterceptedNotificationCode.FACEBOOK_CODE);
-        }
-        else if(packageName.equals(ApplicationPackageNames.GMAPS)){
+        if (packageName.equals(ApplicationPackageNames.FACEBOOK_PACK_NAME)
+                || packageName.equals(ApplicationPackageNames.FACEBOOK_MESSENGER_PACK_NAME)) {
+            return (InterceptedNotificationCode.FACEBOOK_CODE);
+        } else if (packageName.equals(ApplicationPackageNames.GMAPS)) {
 
             getContent(sbn);
 
-            return(InterceptedNotificationCode.MAPS);
-        }
-
-        else{
-            return(InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE);
+            return (InterceptedNotificationCode.MAPS);
+        } else {
+            return (InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE);
         }
     }
 
-    private void getContent(StatusBarNotification sbn){
+    private void getContent(StatusBarNotification sbn) {
 
-        Log. e ( TAG , "********** onNotificationPosted" ) ;
-        Log. e ( TAG , "ID :" + sbn.getId() + " \t " + sbn.getNotification(). tickerText + " \t " + sbn.getPackageName()) ;
+        Log.e(TAG, "********** onNotificationPosted");
+        Log.e(TAG, "ID :" + sbn.getId() + " \t " + sbn.getNotification().tickerText + " \t " + sbn.getPackageName());
 
         Bitmap bmp;
         Bundle extras;
@@ -109,21 +119,50 @@ public class NotificationListener extends NotificationListenerService {
 
         extras = sbn.getNotification().extras;
 
-        NotifiObj notifiObj =  new NotifiObj();
+        NotifiObj notifiObj = new NotifiObj();
         try {
             notifiObj = notifiObj.setupDataFromBundle(extras);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        if(!title.equals(notifiObj.getTitle())){
-            NotificationUtil.showNotification(this, notifiObj.getTitle(),notifiObj.getText());
-            title = notifiObj.getTitle();
+
+        if (SettingData.getVibrate(this)) {
+            if (!title.equals(notifiObj.getTitle())) {
+//                NotificationUtil.showNotification(this, notifiObj.getTitle(),notifiObj.getText());
+//                title = notifiObj.getTitle();
+
+                String[] sArr = notifiObj.getTitle().split("-");
+                if (sArr.length == 1) {
+                    if (!title.equals(sArr[0])) {
+                        NotificationUtil.showNotification(this, notifiObj.getTitle(), notifiObj.getText());
+                        title = sArr[0];
+                    }
+                } else {
+                    String titleTemp = sArr[0];
+                    int meter = Integer.parseInt(titleTemp.split("m")[0].trim());
+                    if (meter > 100 && meter < 200) {
+                        NotificationUtil.showNotification(this, notifiObj.getTitle(), notifiObj.getText());
+                    } else {
+                        String titleTemp2 = sArr[1].trim();
+                        if (!title.equals(titleTemp2)) {
+                            NotificationUtil.showNotification(this, notifiObj.getTitle(), notifiObj.getText());
+                            title = titleTemp2;
+                        }
+                    }
+
+
+                }
+            }
+
+        } else {
+            if (!title.equals(notifiObj.getTitle())) {
+                NotificationUtil.showNotification(this, notifiObj.getTitle(), notifiObj.getText());
+                title = notifiObj.getTitle();
+            }
         }
+
     }
-
-
-
 
 
 }
